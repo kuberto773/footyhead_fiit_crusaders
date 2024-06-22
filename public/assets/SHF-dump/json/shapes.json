@@ -1,0 +1,82 @@
+{
+    "boot": {
+        "type": "fromPhysicsEditor",
+        "label": "boot",
+        "fixtures": [
+            {
+                "label": "boot",
+                "isSensor": false,
+                "vertices": [
+                    [
+                        { "x": 17.5, "y": 3 },
+                        { "x": 13, "y": -0.5 },
+                        { "x": 4, "y": -0.5 },
+                        { "x": -0.5, "y": 1 },
+                        { "x": -0.5, "y": 15 },
+                        { "x": 9, "y": 17.5 },
+                        { "x": 13.5, "y": 14 }
+                    ],
+                    [
+                        { "x": -0.5, "y": 15 },
+                        { "x": 1, "y": 17.5 },
+                        { "x": 9, "y": 17.5 }
+                    ]
+                ]
+            }
+        ]
+    },
+    "player": {
+        "type": "fromPhysicsEditor",
+        "label": "player",
+        "isStatic": false,
+        "density": 0.10000000149011612,
+        "restitution": 0,
+        "friction": 0.10000000149011612,
+        "frictionAir": 0.009999999776482582,
+        "frictionStatic": 0.5,
+
+        "fixtures": [
+            {
+                "label": "",
+                "isSensor": false,
+                "vertices": [
+                    [
+                        { "x": 2.5, "y": 18 },
+                        { "x": 2.5, "y": 24 },
+                        { "x": 5.5, "y": 30 },
+                        { "x": 46.5, "y": 20 },
+                        { "x": 30, "y": 3.5 },
+                        { "x": 6, "y": 15.5 }
+                    ],
+                    [
+                        { "x": 5.5, "y": 35 },
+                        { "x": 11, "y": 41.5 },
+                        { "x": 16, "y": 44.5 },
+                        { "x": 36, "y": 45.5 },
+                        { "x": 39.5, "y": 43 },
+                        { "x": 45.5, "y": 33 },
+                        { "x": 5.5, "y": 30 }
+                    ],
+                    [
+                        { "x": 19, "y": 3.5 },
+                        { "x": 11.5, "y": 7 },
+                        { "x": 6, "y": 15.5 },
+                        { "x": 30, "y": 3.5 }
+                    ],
+                    [
+                        { "x": 5.5, "y": 30 },
+                        { "x": 45.5, "y": 33 },
+                        { "x": 46.5, "y": 20 }
+                    ],
+                    [
+                        { "x": 37, "y": 5.5 },
+                        { "x": 30, "y": 3.5 },
+                        { "x": 46.5, "y": 20 },
+                        { "x": 44.5, "y": 13 }
+                    ]
+                ]
+            }
+        ]
+    },
+    "generator_info": "Shape definitions generated with PhysicsEditor. Visit https://www.codeandweb.com/physicseditor"
+}

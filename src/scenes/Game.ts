@@ -32,7 +32,7 @@ export class Game extends Scene {
         this.load.audio('ball-touch', 'assets/sounds/5_KickSound.mp3');
         this.load.audio('jump', 'assets/sounds/6_JumpSound.mp3');
 
-        this.load.audio('kick', 'assets/sounds/5_KickSound.mp3');
+        // this.load.json('shapes', 'assets/SHF-dump/json/shapes.json');
     }
 
     create() {
