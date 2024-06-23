@@ -75,7 +75,6 @@ export class Game extends Scene {
             .setScale(1.3, 1)
             .setCollisionCategory(categoryPlatform)
             .setCollidesWith(categoryPlayer | categoryFootball);
-
         this.player = this.matter.add
             .image(100, 550, 'sprite-1')
             .setCircle(22, { label: 'player' })
@@ -83,7 +82,6 @@ export class Game extends Scene {
             .setFixedRotation()
             .setCollisionCategory(categoryPlayer)
             .setCollidesWith(categoryFootball | categoryPlatform);
-
         this.ball = this.matter.add
             .image(250, 500, 'football')
             .setCircle(10, { label: 'football' })
@@ -92,11 +90,11 @@ export class Game extends Scene {
             .setFriction(0.1, 0.005)
             .setCollisionCategory(categoryFootball)
             .setCollidesWith(categoryBoot | categoryPlayer | categoryPlatform);
-
         this.boot = this.matter.add
             .image(100, 500, 'boot-1', undefined, { shape: shapes.boot })
             .setRotation(-1.3)
             .setFixedRotation();
+
         // Join player and boot together
         this.matter.add.constraint(
             this.player.body as BodyType,
@@ -117,7 +115,6 @@ export class Game extends Scene {
             }: Phaser.Types.Physics.Matter.MatterCollisionData) => {
                 // Collides with boot
                 if (eitherOr(labelA, labelB, 'football', 'boot')) {
-                    this.sound.play('ball-touch');
                     if (this.cursors.space.isDown) {
                         this.ball.setVelocity(
                             this.ball.getVelocity().x + 5,
@@ -128,19 +125,15 @@ export class Game extends Scene {
                         );
                     }
                 }
-                // Collides with ground
-                if (eitherOr(labelA, labelB, 'football', 'ground')) {
-                    this.sound.play('ball-touch');
-                }
                 // Collides with player
                 if (eitherOr(labelA, labelB, 'football', 'player')) {
-                    this.sound.play('ball-touch');
                     const newVelocity = this.matter.vector.add(
                         this.ball.getVelocity(),
                         this.FOOTBALL_VELOCITY_MODIFIER,
                     );
                     this.ball.setVelocity(newVelocity.x, newVelocity.y);
                 }
+                this.sound.play('ball-touch');
             },
         );
     }
