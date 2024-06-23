@@ -90,10 +90,9 @@ export class Game extends Scene {
         this.ball = this.matter.add
             .image(250, 500, 'football')
             .setCircle(10, { label: 'football' })
-            .setMass(5)
+            .setMass(3)
             .setBounce(0.9)
-            .setFriction(0.1)
-            .setCollisionCategory(cat_ball);
+            .setFriction(0.1, 0.005)
             .setCollisionCategory(categoryFootball)
             .setCollidesWith(categoryBoot | categoryPlayer | categoryPlatform);
 
@@ -101,14 +100,13 @@ export class Game extends Scene {
             .image(100, 500, 'boot-1', undefined, { shape: shapes.boot })
             .setRotation(-1.3)
             .setFixedRotation();
-
         // Join player and boot together
         this.matter.add.constraint(
             this.player.body as BodyType,
             this.boot.body as BodyType,
-            10  , 
-            1,
-            { pointA: { x: 15, y: 15 }, damping: 1 },
+            7,
+            0.8,
+            { pointA: { x: 15, y: 15 } },
         );
 
         this.player.setOnCollideWith(this.platforms, () => {
@@ -158,13 +156,13 @@ export class Game extends Scene {
         if (left.isDown) {
             this.player.setVelocityX(-2);
             this.FOOTBALL_VELOCITY_MODIFIER = {
-                x: -3,
+                x: _random(-3, -1.5, true),
                 y: _random(-2, -0.5, true),
             };
         } else if (right.isDown) {
             this.player.setVelocityX(2);
             this.FOOTBALL_VELOCITY_MODIFIER = {
-                x: 3,
+                x: _random(3, 1.5, true),
                 y: _random(-2, -0.5, true),
             };
         }
