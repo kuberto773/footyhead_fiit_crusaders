@@ -146,7 +146,6 @@ export class Game extends Scene {
                 }
             },
         );
-        this.sound.mute = true;
     }
 
     update(_time: number, _delta: number) {
