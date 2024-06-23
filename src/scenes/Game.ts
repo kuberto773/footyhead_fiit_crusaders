@@ -1,6 +1,8 @@
+import _random from 'lodash/random';
 import { BodyType } from 'matter';
 import { Scene } from 'phaser';
-import _random from 'lodash/random';
+
+import { eitherOr, CollisionCategories } from '../lib';
 
 export class Game extends Scene {
     camera: Phaser.Cameras.Scene2D.Camera;
@@ -8,8 +10,8 @@ export class Game extends Scene {
     cursors_2: any;
     background: Phaser.GameObjects.Image;
     msg_text: Phaser.GameObjects.Text;
-    player: Phaser.Physics.Matter.Sprite;
-    boot: Phaser.Physics.Matter.Sprite;
+    player: Phaser.Physics.Matter.Image;
+    boot: Phaser.Physics.Matter.Image;
     ball: Phaser.Physics.Matter.Image;
     platforms: Phaser.Physics.Matter.Image;
     isGrounded: boolean;
@@ -32,12 +34,16 @@ export class Game extends Scene {
         this.load.audio('ball-touch', 'assets/sounds/5_KickSound.mp3');
         this.load.audio('jump', 'assets/sounds/6_JumpSound.mp3');
 
-        // this.load.json('shapes', 'assets/SHF-dump/json/shapes.json');
+        this.load.json('shapes', 'assets/SHF-dump/json/shapes.json');
     }
 
     create() {
-        const cat_ball = 0b0100;
-        const cat_boot = 0b1000;
+        const {
+            categoryBoot,
+            categoryFootball,
+            categoryPlatform,
+            categoryPlayer,
+        } = CollisionCategories;
 
         this.camera = this.cameras.main;
         this.camera.setBackgroundColor(0x4287f5); // What's the difference between camera and image bg?
@@ -62,22 +68,24 @@ export class Game extends Scene {
             this.input.keyboard?.createCursorKeys() as Phaser.Types.Input.Keyboard.CursorKeys;
         this.cursors_2 = this.input.keyboard?.addKeys('W,A,S,D');
 
-        // const shapes = this.cache.json.get('shapes');
+        const shapes = this.cache.json.get('shapes');
 
         this.matter.world.setBounds();
 
         this.platforms = this.matter.add
-            .image(512, 600, 'ground', undefined, {
-                isStatic: true,
-                label: 'ground',
-            })
-            .setScale(1.3, 1);
+            .image(512, 600, 'ground', undefined, { label: 'ground' })
+            .setStatic(true)
+            .setScale(1.3, 1)
+            .setCollisionCategory(categoryPlatform)
+            .setCollidesWith(categoryPlayer | categoryFootball);
 
         this.player = this.matter.add
-            .sprite(100, 550, 'sprite-1')
+            .image(100, 550, 'sprite-1')
             .setCircle(22, { label: 'player' })
             .setMass(20)
-            .setFixedRotation();
+            .setFixedRotation()
+            .setCollisionCategory(categoryPlayer)
+            .setCollidesWith(categoryFootball | categoryPlatform);
 
         this.ball = this.matter.add
             .image(250, 500, 'football')
@@ -86,18 +94,15 @@ export class Game extends Scene {
             .setBounce(0.9)
             .setFriction(0.1)
             .setCollisionCategory(cat_ball);
+            .setCollisionCategory(categoryFootball)
+            .setCollidesWith(categoryBoot | categoryPlayer | categoryPlatform);
 
         this.boot = this.matter.add
-            .sprite(100, 500, 'boot-1', undefined, {
-                label: 'boot',
-                // shape: shapes.boot,
-            })
+            .image(100, 500, 'boot-1', undefined, { shape: shapes.boot })
             .setRotation(-1.3)
-            .setFixedRotation()
-            .setCollisionCategory(cat_boot)
-            .setCollidesWith(cat_ball);
-        this.boot.body
+            .setFixedRotation();
 
+        // Join player and boot together
         this.matter.add.constraint(
             this.player.body as BodyType,
             this.boot.body as BodyType,
@@ -106,29 +111,44 @@ export class Game extends Scene {
             { pointA: { x: 15, y: 15 }, damping: 1 },
         );
 
-        // TODO: Merge these two into one
         this.player.setOnCollideWith(this.platforms, () => {
             this.isGrounded = true;
         });
-        this.player.setOnCollideWith(this.ball, () => {
-            this.sound.play('ball-touch');
-            this.ball.setVelocity(
-                this.ball.getVelocity().x + this.FOOTBALL_VELOCITY_MODIFIER.x,
-                this.ball.getVelocity().y + this.FOOTBALL_VELOCITY_MODIFIER.y,
-            );
-        });
-        this.boot.setOnCollideWith(this.ball, () => {
-            this.sound.play('ball-touch');
-            if (this.cursors.space.isDown) {
-                this.ball.setVelocity(
-                    this.ball.getVelocity().x + 5,
-                    this.ball.getVelocity().y + -8,
-                );
-            }
-        });
-        this.ball.setOnCollideWith(this.platforms, () => {
-            this.sound.play('ball-touch');
-        });
+
+        this.ball.setOnCollide(
+            ({
+                bodyA: { label: labelA },
+                bodyB: { label: labelB },
+            }: Phaser.Types.Physics.Matter.MatterCollisionData) => {
+                // Collides with boot
+                if (eitherOr(labelA, labelB, 'football', 'boot')) {
+                    this.sound.play('ball-touch');
+                    if (this.cursors.space.isDown) {
+                        this.ball.setVelocity(
+                            this.ball.getVelocity().x + 5,
+                            this.ball.getVelocity().y + -8,
+                        );
+                        this.ball.setAngularVelocity(
+                            this.ball.getAngularVelocity() + 0.5,
+                        );
+                    }
+                }
+                // Collides with ground
+                if (eitherOr(labelA, labelB, 'football', 'ground')) {
+                    this.sound.play('ball-touch');
+                }
+                // Collides with player
+                if (eitherOr(labelA, labelB, 'football', 'player')) {
+                    this.sound.play('ball-touch');
+                    const newVelocity = this.matter.vector.add(
+                        this.ball.getVelocity(),
+                        this.FOOTBALL_VELOCITY_MODIFIER,
+                    );
+                    this.ball.setVelocity(newVelocity.x, newVelocity.y);
+                }
+            },
+        );
+        this.sound.mute = true;
     }
 
     update(_time: number, _delta: number) {

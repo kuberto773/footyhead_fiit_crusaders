@@ -2,24 +2,24 @@
     "boot": {
         "type": "fromPhysicsEditor",
         "label": "boot",
+        "isStatic": false,
+        "density": 0.8,
+        "restitution": 0.1,
+        "friction": 0.1,
+        "frictionAir": 0.001,
+        "frictionStatic": 0.5,
+        "collisionFilter": { "mask": 8, "category": 4 },
         "fixtures": [
             {
                 "label": "boot",
                 "isSensor": false,
                 "vertices": [
                     [
-                        { "x": 17.5, "y": 3 },
-                        { "x": 13, "y": -0.5 },
-                        { "x": 4, "y": -0.5 },
-                        { "x": -0.5, "y": 1 },
-                        { "x": -0.5, "y": 15 },
-                        { "x": 9, "y": 17.5 },
-                        { "x": 13.5, "y": 14 }
-                    ],
-                    [
-                        { "x": -0.5, "y": 15 },
-                        { "x": 1, "y": 17.5 },
-                        { "x": 9, "y": 17.5 }
+                        { "x": 9, "y": 17 },
+                        { "x": 1, "y": 17 },
+                        { "x": 0, "y": 0 },
+                        { "x": 17, "y": 1 },
+                        { "x": 14, "y": 10 }
                     ]
                 ]
             }
@@ -34,7 +34,6 @@
         "friction": 0.10000000149011612,
         "frictionAir": 0.009999999776482582,
         "frictionStatic": 0.5,
-
         "fixtures": [
             {
                 "label": "",
