@@ -23,18 +23,15 @@ export class Game extends Scene {
     }
 
     preload() {
-        this.load.image('sprite-1', 'assets/SHF-dump/players/274.png');
-        this.load.image('boot-1', 'assets/SHF-dump/boots/320.png');
-        this.load.image('ground', 'assets/SHF-dump/109.png');
-        this.load.image(
-            'football',
-            'assets/SHF-dump/sprites/DefineSprite_86/1.png',
-        );
+        this.load.image('sprite-1', 'assets/images/274.png');
+        this.load.image('boot-1', 'assets/images/320.png');
+        this.load.image('ground', 'assets/images/109.png');
+        this.load.image('football', 'assets/images/1.png');
 
         this.load.audio('ball-touch', 'assets/sounds/5_KickSound.mp3');
         this.load.audio('jump', 'assets/sounds/6_JumpSound.mp3');
 
-        this.load.json('shapes', 'assets/SHF-dump/json/shapes.json');
+        this.load.json('shapes', 'assets/json/shapes.json');
     }
 
     create() {
