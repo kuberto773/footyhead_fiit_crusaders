@@ -2,10 +2,11 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
 import { Cloud } from "./layout";
 import ErrorPage from "./error-page";
-import Home from "./routes/root";
-import StartGame from "./routes/start";
-import GameLobby from "./routes/play";
-import { action as createGameAction } from "./actions/play";
+import Home from "./routes/home";
+import Game from "./routes/game";
+import Play from "./routes/play";
+import { action as playAction } from "./actions/play";
+import { loader as gameLoader } from "./loaders/game";
 
 function App() {
   const router = createBrowserRouter([
@@ -16,12 +17,14 @@ function App() {
     },
     {
       path: "/play",
-      action: createGameAction,
-      element: <GameLobby />,
+      action: playAction,
+      element: <Play />,
     },
     {
       path: "/play/:pin",
-      element: <StartGame />,
+      loader: gameLoader,
+      element: <Game />,
+      errorElement: <ErrorPage />,
     },
   ]);
 

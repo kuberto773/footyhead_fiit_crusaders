@@ -22,9 +22,14 @@ export class Game extends Scene {
   tickRate = 1000 / 120;
   clientText: Phaser.GameObjects.Text;
   remoteText: Phaser.GameObjects.Text;
+  roomData: any;
   constructor() {
     super("Game");
     this.players = {};
+  }
+
+  async init(data: any) {
+    this.roomData = data;
   }
 
   preload() {
@@ -40,13 +45,14 @@ export class Game extends Scene {
     const shapes = this.cache.json.get("shapes");
 
     try {
-      this.room = await this.client.joinOrCreate("game_room", {
-        password: "foo",
+      this.room = await this.client.joinById(this.roomData.roomId, {
+        pin: this.roomData.pin,
       });
       console.log("Joined successfully!");
     } catch (e) {
       console.error(e);
     }
+
     // this.clientText = this.add
     //     .text(100, 75, '1', {
     //         fontFamily: 'Arial Black',
@@ -129,6 +135,7 @@ export class Game extends Scene {
       });
     });
     this.room.state.players.onRemove((player: any, sessionId: string) => {
+      console.log('called')
       const playerEntity = this.players[sessionId];
       if (playerEntity) {
         playerEntity.destroy(this.matter.world);
@@ -219,8 +226,7 @@ export class Game extends Scene {
       );
     });
 
-    // this.sound.setMute(this.matter.getConfig().debug as boolean);
-    // EventBus.emit("current-scene-ready", this);
+    this.sound.setMute(this.matter.getConfig().debug as boolean);
   }
 
   update(time: number, _delta: number) {

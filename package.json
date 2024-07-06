@@ -1,16 +1,17 @@
 {
-    "name": "footyhead",
-    "version": "0.0.1",
-    "main": "index.js",
-    "scripts": {
-        "server": "cd server && npm start",
-        "client": "cd client && npm run dev",
-        "start": "concurrently -p \"[{name}]\" -n \"HTTP,TSX\" -c \"bgMagenta.bold,bgGreen.bold\" \"npm run server\" \"npm run client\""
-    },
-    "author": "",
-    "license": "ISC",
-    "description": "",
-    "devDependencies": {
-        "concurrently": "^8.2.2"
-    }
+  "name": "footyhead",
+  "version": "0.0.1",
+  "main": "index.js",
+  "scripts": {
+    "server": "cd server && npm start",
+    "client": "cd client && npm run dev",
+    "clean": "cd server && npm run clean-db",
+    "start": "concurrently -p \"[{name}]\" -n \"HTTP,TSX\" -c \"bgMagenta.bold,bgGreen.bold\" \"npm run server\" \"npm run client\""
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
 }

@@ -1,4 +1,4 @@
-import { Room, Client } from "@colyseus/core";
+import { Room, Client, matchMaker } from "@colyseus/core";
 import { Ball, GameState, Player, Score } from "./schema/GameState";
 import {
   Engine,
@@ -10,6 +10,7 @@ import {
   Sleeping,
   Collision,
 } from "matter-js";
+import db from "../../db/init";
 
 export class GameRoom extends Room<GameState> {
   engine: Engine;
@@ -21,11 +22,6 @@ export class GameRoom extends Room<GameState> {
   maxClients = 2;
 
   onCreate(options: any) {
-    if (options.password) {
-      // console.log(options);
-      this.setPrivate();
-    }
-
     this.setState(new GameState());
 
     this.engine = Engine.create({ gravity: { y: 0.7 }, enableSleeping: true });
@@ -144,6 +140,11 @@ export class GameRoom extends Room<GameState> {
   onJoin(client: Client, options: any) {
     console.log(client.sessionId, "joined!");
     let player;
+
+    db.prepare("UPDATE game SET active = active + 1 WHERE pin = ?").run(
+      options.pin
+    );
+
     if (!this.initId) {
       this.initId = client.sessionId;
       World.add(this.world, this.playerOne);
@@ -169,6 +170,7 @@ export class GameRoom extends Room<GameState> {
 
   onDispose() {
     console.log("room", this.roomId, "disposing...");
+    db.prepare("DELETE FROM game WHERE roomId = ?").run(this.roomId);
   }
 
   resetPositions() {

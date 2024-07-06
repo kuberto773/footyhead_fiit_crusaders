@@ -1,3 +1,4 @@
+import React from "react";
 import CloudImgLeft from "/assets/images/cloud_1.png";
 import CloudImgRight from "/assets/images/cloud_2.png";
 
@@ -9,7 +10,8 @@ export function Button(props: React.PropsWithChildren<{ className?: string }>) {
   return (
     <button
       type="submit"
-      className={`button--pandora honk-font ${props.className || ""}`}
+      className={`button--pandora honk-font ${props?.className ?? ""}`}
+      {...props}
     >
       <span>{props.children}</span>
     </button>

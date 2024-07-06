@@ -1,6 +1,8 @@
 import { Scene } from "phaser";
+import { EventBus } from "../EventBus";
 
 export class Preloader extends Scene {
+  gamePin: { pin: string };
   constructor() {
     super("Preloader");
   }
@@ -39,10 +41,9 @@ export class Preloader extends Scene {
   }
 
   create() {
-    //  When all the assets have loaded, it's often worth creating global objects here that the rest of the game can use.
-    //  For example, you can define global animations here, so we can use them in other scenes.
-
-    //  Move to the MainMenu. You could also swap this for a Scene Transition, such as a camera fade.
-    this.scene.start("Game");
+    EventBus.on("room-ready", (data) => {
+      this.scene.start("Game", data);
+    });
+    EventBus.emit("current-scene-ready", this);
   }
 }
