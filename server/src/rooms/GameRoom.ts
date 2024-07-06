@@ -169,7 +169,6 @@ export class GameRoom extends Room<GameState> {
   }
 
   onDispose() {
-    console.log("room", this.roomId, "disposing...");
     db.prepare("DELETE FROM game WHERE roomId = ?").run(this.roomId);
   }
 

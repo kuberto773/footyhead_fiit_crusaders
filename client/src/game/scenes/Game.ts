@@ -135,7 +135,6 @@ export class Game extends Scene {
       });
     });
     this.room.state.players.onRemove((player: any, sessionId: string) => {
-      console.log('called')
       const playerEntity = this.players[sessionId];
       if (playerEntity) {
         playerEntity.destroy(this.matter.world);
