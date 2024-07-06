@@ -19,6 +19,7 @@ function App() {
       path: "/play",
       action: playAction,
       element: <Play />,
+      errorElement: <ErrorPage />,
     },
     {
       path: "/play/:pin",
