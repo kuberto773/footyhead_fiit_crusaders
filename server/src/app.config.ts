@@ -1,8 +1,10 @@
+import crypto from "crypto";
 import config from "@colyseus/tools";
 import { monitor } from "@colyseus/monitor";
 import { playground } from "@colyseus/playground";
-import crypto from "crypto";
+
 import db from "../db/init";
+import { clearStalePINs } from "./cron";
 
 /**
  * Import your Room files
@@ -30,7 +32,7 @@ export default config({
      * Define your room handlers:
      */
     if (process.env.NODE_ENV !== "production") {
-      //   gameServer.simulateLatency(200);
+      // gameServer.simulateLatency(200);
     }
     gameServer.define("game_room", GameRoom).filterBy(["pin"]);
   },
@@ -41,18 +43,16 @@ export default config({
      * Bind your custom express routes here:
      * Read more: https://expressjs.com/en/starter/basic-routing.html
      */
-    app.get("/hello_world", (req, res) => {
-      res.send("It's time to kick ass and chew bubblegum!");
-    });
+
+    clearStalePINs.start();
 
     app.get("/play", async (req, res) => {
       const pin = generateRandomPassphrase(6);
       const room = await matchMaker.createRoom("game_room", { pin: pin });
 
-      db.prepare("INSERT INTO game (pin, roomId, active) VALUES (?, ?, ?)").run(
+      db.prepare("INSERT INTO game (pin, roomId, active) VALUES (?, ?, 0)").run(
         pin,
-        room.roomId,
-        0
+        room.roomId
       );
 
       res.send({ pin });
@@ -64,10 +64,10 @@ export default config({
         .get(req.params.pin) as { pin: string; roomId: string; active: number };
 
       if (!row || row.active >= 2 || req.params.pin !== row.pin) {
-        res.status(404).send({ success: false });
+        res.sendStatus(404);
         return;
       }
-      res.send({ success: true, pin: req.params.pin, roomId: row.roomId });
+      res.send({ pin: req.params.pin, roomId: row.roomId });
     });
 
     /**
