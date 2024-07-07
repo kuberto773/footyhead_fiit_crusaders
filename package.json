@@ -3,8 +3,8 @@
   "version": "0.0.1",
   "main": "index.js",
   "scripts": {
-    "server": "cd server && npm start",
-    "client": "cd client && npm run dev",
+    "server": "cd server && npm run start-server",
+    "client": "cd client && npm run start-client",
     "clean": "cd server && npm run clean-db",
     "start": "concurrently -p \"[{name}]\" -n \"HTTP,TSX\" -c \"bgMagenta.bold,bgGreen.bold\" \"npm run server\" \"npm run client\""
   },

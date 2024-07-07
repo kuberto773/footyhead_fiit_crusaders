@@ -12,7 +12,7 @@
     "typescript"
   ],
   "scripts": {
-    "dev": "vite --config vite/config.dev.mjs",
+    "start-client": "vite --config vite/config.dev.mjs",
     "build": "vite build --config vite/config.prod.mjs"
   },
   "devDependencies": {
