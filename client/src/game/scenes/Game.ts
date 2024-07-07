@@ -7,8 +7,6 @@ import { CollisionCategories, PlayerNumber } from "../lib";
 import { Ball, Goal, Player } from "../objects";
 
 export class Game extends Scene {
-  client = new ColyseusClient("http://192.168.0.201:2567");
-  room: Room;
   camera: Phaser.Cameras.Scene2D.Camera;
   cursors: Record<string, Phaser.Input.Keyboard.Key>;
   background: Phaser.GameObjects.Image;
@@ -16,13 +14,10 @@ export class Game extends Scene {
   platforms: Phaser.Physics.Matter.Image;
   players: Record<string, Player>;
   ball: Ball;
-  PLAYER_SPEED_X = 4;
-  PLAYER_SPEED_Y = -6;
-  lastUpdateTime = 0;
-  tickRate = 1000 / 120;
-  clientText: Phaser.GameObjects.Text;
-  remoteText: Phaser.GameObjects.Text;
+  room: Room;
   roomData: any;
+  client = new ColyseusClient("http://192.168.0.201:2567");
+
   constructor() {
     super("Game");
     this.players = {};
@@ -34,15 +29,17 @@ export class Game extends Scene {
 
   preload() {
     this.camera = this.cameras.main;
-    this.cursors = this.input.keyboard?.addKeys(
-      "up, left, right, space , W, A, D, C, ctrl, enter"
-    ) as Record<string, Phaser.Input.Keyboard.Key>;
+    this.cursors = this.input.keyboard?.addKeys(" W, A, D, space") as Record<
+      string,
+      Phaser.Input.Keyboard.Key
+    >;
   }
 
   async create(_time: number, _delta: number) {
     const { categoryFootball, categoryPlatform, categoryPlayer } =
       CollisionCategories;
     const shapes = this.cache.json.get("shapes");
+    const { W, A, D, space } = this.cursors;
 
     try {
       this.room = await this.client.joinById(this.roomData.roomId, {
@@ -52,28 +49,6 @@ export class Game extends Scene {
     } catch (e) {
       console.error(e);
     }
-
-    // this.clientText = this.add
-    //     .text(100, 75, '1', {
-    //         fontFamily: 'Arial Black',
-    //         fontSize: '49px',
-    //         color: '#ffffff',
-    //         stroke: '#000000',
-    //         strokeThickness: 6,
-    //         align: 'left',
-    //     })
-    //     .setOrigin(0.5);
-
-    // this.remoteText = this.add
-    //     .text(800, 75, '2', {
-    //         fontFamily: 'Arial Black',
-    //         fontSize: '22px',
-    //         color: '#ffffff',
-    //         stroke: '#000000',
-    //         strokeThickness: 6,
-    //         align: 'left',
-    //     })
-    //     .setOrigin(0.5);
 
     this.scoreText = this.add
       .text(512, 175, "0 : 0", {
@@ -85,9 +60,6 @@ export class Game extends Scene {
       .setOrigin(0.5);
 
     this.matter.world.setBounds();
-
-    // this.background = this.add.image(512, 384, "background");
-    // this.background.setAlpha(0.5);
 
     this.platforms = this.matter.add
       .image(512, 600, "ground", undefined, { label: "ground" })
@@ -107,37 +79,35 @@ export class Game extends Scene {
       shape: shapes.goal_2,
     });
 
-    this.room.state.players.onAdd((player: any, sessionId: string) => {
+    this.room.state.players.onAdd((playerState: any, sessionId: string) => {
       console.log(`Player has been added with sessionId: ${sessionId}`);
-
-      // add player entity to the game world
-      const playerEntity = new Player(
+      // Add player entity to world
+      const player = new Player(
         this.matter.world,
-        player.team,
+        playerState.team,
         undefined,
         {
-          shape: shapes[`boot_${player.team}`],
+          shape: shapes[`boot_${playerState.team}`],
         }
       );
+      this.players[sessionId] = player;
 
-      this.players[sessionId] = playerEntity;
-
-      // listen for changes to this player
-      player.onChange(() => {
-        playerEntity.player.setData("serverX", player.x);
-        playerEntity.player.setData("serverY", player.y);
-        playerEntity.player.setData("serverVX", player.vx);
-        playerEntity.player.setData("serverVY", player.vy);
+      playerState.onChange(() => {
+        // Cache updated coordinates for processing
+        player.body.setData("serverX", playerState.x);
+        player.body.setData("serverY", playerState.y);
+        player.body.setData("serverVX", playerState.vx);
+        player.body.setData("serverVY", playerState.vy);
       });
 
-      playerEntity.player.setOnCollideWith([this.platforms], () => {
-        playerEntity.isGrounded = true;
+      player.body.setOnCollideWith([this.platforms], () => {
+        player.isGrounded = true;
       });
     });
-    this.room.state.players.onRemove((player: any, sessionId: string) => {
-      const playerEntity = this.players[sessionId];
-      if (playerEntity) {
-        playerEntity.destroy(this.matter.world);
+    this.room.state.players.onRemove((_: any, sessionId: string) => {
+      const player = this.players[sessionId];
+      if (player) {
+        player.destroy(this.matter.world);
         delete this.players[sessionId];
       }
     });
@@ -149,21 +119,15 @@ export class Game extends Scene {
         bodyB: { label: labelB },
       }: Phaser.Types.Physics.Matter.MatterCollisionData) => {
         // Collides with boot
-        if (
-          this.cursors.space.isDown &&
-          (labelA == "boot-1" || labelB == "boot-1")
-        ) {
+        if (space.isDown && (labelA == "boot-1" || labelB == "boot-1")) {
           this.ball.setVelocity(
             this.ball.getVelocity().x + 5,
             this.ball.getVelocity().y + -8
           );
           this.ball.setAngularVelocity(this.ball.getAngularVelocity() + 0.5);
           this.room.send("kick");
-        } else if (
-          this.cursors.C.isDown &&
-          (labelA == "boot-2" || labelB == "boot-2")
-        ) {
-          if (this.cursors.space.isDown) {
+        } else if (space.isDown && (labelA == "boot-2" || labelB == "boot-2")) {
+          if (space.isDown) {
             this.ball.setVelocity(
               this.ball.getVelocity().x + -5,
               this.ball.getVelocity().y + -8
@@ -177,12 +141,7 @@ export class Game extends Scene {
             labelB == "player-1" ||
             labelA == "player-2" ||
             labelB == "player-2") &&
-          (this.cursors.up.isDown ||
-            this.cursors.right.isDown ||
-            this.cursors.left.isDown ||
-            this.cursors.W.isDown ||
-            this.cursors.A.isDown ||
-            this.cursors.D.isDown)
+          (W.isDown || A.isDown || D.isDown)
         ) {
           const newVelocity = this.matter.vector.add(
             this.ball.getVelocity(),
@@ -192,9 +151,9 @@ export class Game extends Scene {
         }
         // Scores Goal
         if (labelA == "goal-sensor-1" || labelB == "goal-sensor-1") {
-          // this.scoreGoal(PlayerNumber.Two);
+          this.scoreGoal(PlayerNumber.Two);
         } else if (labelA == "goal-sensor-2" || labelB == "goal-sensor-2") {
-          // this.scoreGoal(PlayerNumber.One);
+          this.scoreGoal(PlayerNumber.One);
         }
 
         // Dead ball
@@ -209,6 +168,7 @@ export class Game extends Scene {
         this.sound.play("ball-touch");
       }
     );
+
     this.room.state.ball.onChange(() => {
       const ballState = this.room.state.ball;
       this.ball.setData("ballX", ballState.x);
@@ -225,7 +185,7 @@ export class Game extends Scene {
       );
     });
 
-    this.sound.setMute(this.matter.getConfig().debug as boolean);
+    this.sound.setMute(!!this.matter.config.debug);
   }
 
   update(time: number, _delta: number) {
@@ -247,31 +207,35 @@ export class Game extends Scene {
     }
 
     for (const sessionId in this.players) {
-      // interpolate all player entities
-      const p = this.players[sessionId];
-      if (W.isDown && p.isGrounded) {
+      const player = this.players[sessionId];
+      if (W.isDown && player.isGrounded) {
         this.room.send("move", { direction: "up" });
-        p.isGrounded = false;
+        this.sound.play("jump");
+        player.isGrounded = false;
       }
       if (space.isDown && space.getDuration() < 75) {
         p.boot.setVelocityX(-15);
       }
-      this.interpolatePlayer(sessionId);
+      this.interpolatePlayer(player);
     }
+
     this.interpolateBall();
   }
 
-  interpolatePlayer(sessionId: string) {
-    const entity = this.players[sessionId];
-    const { serverX, serverY, serverVX, serverVY } = entity.player.data.values;
+  interpolatePlayer(player: Player) {
+    const { serverX, serverY, serverVX, serverVY, serverKick } =
+      player.body.data.values;
 
     entity.player.setPosition(
       Phaser.Math.Linear(entity.player.x, serverX, 0.2),
       Phaser.Math.Linear(entity.player.y, serverY, 0.2)
+    player.body.setPosition(
+      Phaser.Math.Linear(player.body.x, serverX, 0.2),
+      Phaser.Math.Linear(player.body.y, serverY, 0.2)
     );
-    entity.player.setVelocity(
-      Phaser.Math.Linear(entity.player.getVelocity().x, serverVX, 0.2),
-      Phaser.Math.Linear(entity.player.getVelocity().y, serverVY, 0.2)
+    player.body.setVelocity(
+      Phaser.Math.Linear(player.body.getVelocity().x, serverVX, 0.2),
+      Phaser.Math.Linear(player.body.getVelocity().y, serverVY, 0.2)
     );
   }
 
@@ -284,20 +248,19 @@ export class Game extends Scene {
       Phaser.Math.Linear(this.ball.y, ballY, 0.2)
     );
     this.ball.setVelocity(
-      Phaser.Math.Linear(this.ball.getVelocity().x, ballVX, 0.1),
-      Phaser.Math.Linear(this.ball.getVelocity().y, ballVY, 0.2)
+      Phaser.Math.Linear(this.ball.getVelocity().x, ballVX, 0.5),
+      Phaser.Math.Linear(this.ball.getVelocity().y, ballVY, 0.5)
     );
     this.ball.setAngularVelocity(
-      Phaser.Math.Linear(this.ball.getAngularVelocity(), ballAngle, 0.001)
+      Phaser.Math.Linear(this.ball.getAngularVelocity(), ballAngle, 0.1)
     );
   }
 
   scoreGoal(playerNumber: PlayerNumber) {
     this.room.send("goal", playerNumber);
-
     this.matter.pause();
+    // this.scene.pause()
     this.sound.play("die");
-
     this.time.delayedCall(750, () => {
       this.room.send("serve", playerNumber);
       this.serveBall(playerNumber);

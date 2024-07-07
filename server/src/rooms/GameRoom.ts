@@ -12,19 +12,24 @@ import {
 } from "matter-js";
 import db from "../../db/init";
 
+/**
+ * Footyhead Game Room. First client that joins is designated host
+ * and their sessionId is set to `hostId`
+ */
 export class GameRoom extends Room<GameState> {
   engine: Engine;
   world: World;
-  initId: string;
+  hostId: string;
   playerOne: Body;
   playerTwo: Body;
   ball: Body;
+
   maxClients = 2;
 
   onCreate(options: any) {
     this.setState(new GameState());
 
-    this.engine = Engine.create({ gravity: { y: 0.7 }, enableSleeping: true });
+    this.engine = Engine.create({ enableSleeping: true, gravity: { y: 0.7 } });
     this.world = this.engine.world;
 
     const leftWall = Bodies.rectangle(-10, 300, 20, 768, { isStatic: true });
@@ -33,6 +38,16 @@ export class GameRoom extends Room<GameState> {
     const ground = Bodies.rectangle(512, 600, 1024, 20, {
       isStatic: true,
       friction: 0.3,
+    });
+    const goalOne = Bodies.rectangle(40, 465, 80, 5, {
+      isStatic: true,
+      angle: 0.05,
+      restitution: 0.4,
+    });
+    const goalTwo = Bodies.rectangle(984, 465, 80, 5, {
+      isStatic: true,
+      angle: -0.05,
+      restitution: 0.4,
     });
     this.playerOne = Bodies.circle(200, 500, 22, {
       mass: 20,
@@ -49,25 +64,14 @@ export class GameRoom extends Room<GameState> {
       frictionAir: 0.005,
     });
 
-    const goalOne = Bodies.rectangle(40, 465, 80, 5, {
-      isStatic: true,
-      angle: 0.05,
-      restitution: 0.4,
-    });
-    const goalTwo = Bodies.rectangle(984, 465, 80, 5, {
-      isStatic: true,
-      angle: -0.05,
-      restitution: 0.4,
-    });
-
     Composite.add(this.world, [
       ground,
       leftWall,
       rightWall,
       ceiling,
-      this.ball,
       goalOne,
       goalTwo,
+      this.ball,
     ]);
 
     this.setSimulationInterval((timeDelta) => {
@@ -75,12 +79,12 @@ export class GameRoom extends Room<GameState> {
     }, 1000 / 60);
 
     Events.on(this.engine, "afterUpdate", () => {
-      const goalOneCollision = Collision.collides(goalOne, this.ball);
-      const goalTwoCollision = Collision.collides(goalTwo, this.ball);
+      const goalOneTop = Collision.collides(goalOne, this.ball);
+      const goalTwoTop = Collision.collides(goalTwo, this.ball);
 
-      if (goalOneCollision?.collided) {
+      if (goalOneTop?.collided) {
         Body.setVelocity(this.ball, { x: 1.5, y: this.ball.velocity.y });
-      } else if (goalTwoCollision?.collided) {
+      } else if (goalTwoTop?.collided) {
         Body.setVelocity(this.ball, { x: -1.5, y: this.ball.velocity.y });
       }
 
@@ -90,28 +94,27 @@ export class GameRoom extends Room<GameState> {
       this.state.ball.vy = this.ball.velocity.y;
       this.state.ball.angle = this.ball.angularVelocity;
 
-      this.state.players.forEach((p, sessionId) => {
+      this.state.players.forEach((playerState, sessionId) => {
         const player =
-          sessionId == this.initId ? this.playerOne : this.playerTwo;
+          sessionId == this.hostId ? this.playerOne : this.playerTwo;
 
-        p.x = player.position.x;
-        p.y = player.position.y;
-        p.vx = player.velocity.x;
-        p.vy = player.velocity.y;
-        this.state.players.set(sessionId, p);
+        playerState.x = player.position.x;
+        playerState.y = player.position.y;
+        playerState.vx = player.velocity.x;
+        playerState.vy = player.velocity.y;
       });
     });
 
-    this.onMessage("move", (client, data) => {
+    this.onMessage("move", (client, { direction }) => {
       const player =
-        client.sessionId == this.initId ? this.playerOne : this.playerTwo;
+        client.sessionId == this.hostId ? this.playerOne : this.playerTwo;
       Sleeping.set(player, false);
-      if (data.direction == "right") {
-        Body.setVelocity(player, { x: 4, y: player.velocity.y });
-      } else if (data.direction == "left") {
+      if (direction == "left") {
         Body.setVelocity(player, { x: -4, y: player.velocity.y });
+      } else if (direction == "right") {
+        Body.setVelocity(player, { x: 4, y: player.velocity.y });
       }
-      if (data.direction == "up") {
+      if (direction == "up") {
         Body.setVelocity(player, { x: player.velocity.x, y: -6 });
       }
     });
@@ -138,15 +141,10 @@ export class GameRoom extends Room<GameState> {
   }
 
   onJoin(client: Client, options: any) {
-    console.log(client.sessionId, "joined!");
     let player;
 
-    db.prepare("UPDATE game SET active = active + 1 WHERE pin = ?").run(
-      options.pin
-    );
-
-    if (!this.initId) {
-      this.initId = client.sessionId;
+    if (!this.hostId) {
+      this.hostId = client.sessionId;
       World.add(this.world, this.playerOne);
       player = new Player(1);
     } else {
@@ -156,16 +154,26 @@ export class GameRoom extends Room<GameState> {
     this.state.ball = new Ball();
     this.state.score = new Score();
     this.state.players.set(client.sessionId, player);
+
+    db.prepare("UPDATE game SET active = active + 1 WHERE roomId = ?").run(
+      this.roomId
+    );
   }
 
   onLeave(client: Client, consented: boolean) {
-    console.log(client.sessionId, "left!");
+    if (client.sessionId == this.hostId) {
+      this.disconnect();
+      return;
+    }
     const player = this.state.players.get(client.sessionId);
     World.remove(
       this.world,
       player.team == 1 ? this.playerOne : this.playerTwo
     );
     this.state.players.delete(client.sessionId);
+    db.prepare("UPDATE game SET active = active - 1 WHERE roomId = ?").run(
+      this.roomId
+    );
   }
 
   onDispose() {
