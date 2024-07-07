@@ -27,6 +27,10 @@ export class GameRoom extends Room<GameState> {
   maxClients = 2;
 
   onCreate(options: any) {
+    if (options.pin) {
+      this.setPrivate();
+    }
+
     this.setState(new GameState());
 
     this.engine = Engine.create({ enableSleeping: true, gravity: { y: 0.7 } });
