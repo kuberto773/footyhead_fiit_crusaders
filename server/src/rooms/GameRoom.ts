@@ -119,12 +119,31 @@ export class GameRoom extends Room<GameState> {
       }
     });
 
-    this.onMessage("kick", () => {
-      Body.setVelocity(this.ball, {
-        x: this.ball.velocity.x + 5,
-        y: this.ball.velocity.y - 8,
-      });
-      Body.setAngularVelocity(this.ball, this.ball.angularVelocity + 0.5);
+    this.onMessage("startKick", (client) => {
+      const player = this.state.players.get(client.sessionId);
+      player.kick = true;
+      this.clock.setTimeout(() => {
+        player.kick = false;
+      }, 75);
+    });
+
+    this.onMessage("kick", (client) => {
+      const player = this.state.players.get(client.sessionId);
+      switch (player.team) {
+        case 1:
+          Body.setVelocity(this.ball, {
+            x: this.ball.velocity.x + 5,
+            y: this.ball.velocity.y - 8,
+          });
+          Body.setAngularVelocity(this.ball, this.ball.angularVelocity + 0.5);
+          break;
+        case 2:
+          Body.setVelocity(this.ball, {
+            x: this.ball.velocity.x - 5,
+            y: this.ball.velocity.y - 8,
+          });
+          Body.setAngularVelocity(this.ball, this.ball.angularVelocity - 0.5);
+      }
     });
 
     this.onMessage("goal", (_, player: 1 | 2) => {

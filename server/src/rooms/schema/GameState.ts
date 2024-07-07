@@ -12,6 +12,7 @@ export class Player extends Schema {
   @type("number") angle: number = 0;
   @type("number") vx: number = 0;
   @type("number") vy: number = 0;
+  @type("boolean") kick: boolean = false;
 }
 
 export class Ball extends Schema {

@@ -98,6 +98,7 @@ export class Game extends Scene {
         player.body.setData("serverY", playerState.y);
         player.body.setData("serverVX", playerState.vx);
         player.body.setData("serverVY", playerState.vy);
+        player.body.setData("serverKick", playerState.kick);
       });
 
       player.body.setOnCollideWith([this.platforms], () => {
@@ -132,7 +133,8 @@ export class Game extends Scene {
               this.ball.getVelocity().x + -5,
               this.ball.getVelocity().y + -8
             );
-            this.ball.setAngularVelocity(this.ball.getAngularVelocity() + 0.5);
+            this.room.send("kick");
+            this.ball.setAngularVelocity(this.ball.getAngularVelocity() - 0.5);
           }
         }
         // Collides with player
@@ -214,7 +216,7 @@ export class Game extends Scene {
         player.isGrounded = false;
       }
       if (space.isDown && space.getDuration() < 75) {
-        p.boot.setVelocityX(-15);
+        this.room.send("startKick");
       }
       this.interpolatePlayer(player);
     }
@@ -226,9 +228,10 @@ export class Game extends Scene {
     const { serverX, serverY, serverVX, serverVY, serverKick } =
       player.body.data.values;
 
-    entity.player.setPosition(
-      Phaser.Math.Linear(entity.player.x, serverX, 0.2),
-      Phaser.Math.Linear(entity.player.y, serverY, 0.2)
+    if (serverKick) {
+      player.boot.setVelocityX(player.team == PlayerNumber.One ? -15 : 15);
+    }
+
     player.body.setPosition(
       Phaser.Math.Linear(player.body.x, serverX, 0.2),
       Phaser.Math.Linear(player.body.y, serverY, 0.2)
