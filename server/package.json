@@ -1,7 +1,7 @@
 {
   "name": "footyhead-server",
   "description": "Footyhead Server",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "author": "Ahmad Zaidi",
   "license": "ISC",
   "engines": {
