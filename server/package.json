@@ -3,7 +3,7 @@
   "description": "Footyhead Server",
   "version": "0.0.1",
   "author": "Ahmad Zaidi",
-  "license": "MIT",
+  "license": "ISC",
   "engines": {
     "node": ">= 16.13.0"
   },

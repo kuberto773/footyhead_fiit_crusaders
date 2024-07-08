@@ -1,6 +1,7 @@
 {
   "name": "footyhead",
   "version": "0.0.1",
+  "license": "ISC",
   "main": "index.js",
   "scripts": {
     "server": "cd server && npm run start-server",
@@ -8,8 +9,6 @@
     "clean": "cd server && npm run clean-db",
     "start": "concurrently -p \"[{name}]\" -n \"HTTP,TSX\" -c \"bgMagenta.bold,bgGreen.bold\" \"npm run server\" \"npm run client\""
   },
-  "author": "",
-  "license": "ISC",
   "description": "",
   "devDependencies": {
     "concurrently": "^8.2.2"
