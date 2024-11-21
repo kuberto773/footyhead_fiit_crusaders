@@ -6,10 +6,10 @@ RUN apk update && \
     apk add --no-cache git bash python3 make gcc g++
 
 # Clone the repository
-RUN git clone https://github.com/azaidi4/footyhead.git
+RUN git clone https://github.com/kuberto773/footyhead_fiit_crusaders.git
 
 # Set working directory to the server folder
-WORKDIR /footyhead/server
+WORKDIR /footyhead_fiit_crusaders/server
 
 # Install dependencies
 RUN npm install
